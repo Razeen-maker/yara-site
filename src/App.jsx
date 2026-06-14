@@ -1,255 +1,545 @@
-cat > /mnt/user-data/outputs/App.jsx << 'EOF'
 import { useState, useEffect } from "react";
+import { ShoppingBag, Menu, X, ArrowRight, MessageCircle, Plus, Pencil, Trash2, Save, XCircle, Lock, Eye, Image as ImageIcon } from "lucide-react";
 
-const WHATSAPP = "971500000000";
-const KEY = "yara:products";
-const DEFAULTS = [
-  { id:"p1", name:"Silk Charmeuse", origin:"Como, Italy", price:68, color:"#D9C9A0" },
-  { id:"p2", name:"Wool Boucle", origin:"Yorkshire, UK", price:54, color:"#A89A88" },
-  { id:"p3", name:"Linen Voile", origin:"Normandy, France", price:42, color:"#CFC8B4" },
-  { id:"p4", name:"Velvet Cotton", origin:"Lyon, France", price:76, color:"#5A3A40" },
-  { id:"p5", name:"Cashmere Twill", origin:"Kashmir, India", price:92, color:"#9A8A70" },
-  { id:"p6", name:"Jacquard Brocade", origin:"Suzhou, China", price:88, color:"#A8841E" },
+const STORAGE_KEY = "yara:products";
+const WHATSAPP_NUMBER = "971500000000"; // <-- replace with your real WhatsApp number, digits only, country code first
+
+const DEFAULT_PRODUCTS = [
+  { id: "p1", name: "Silk Charmeuse", origin: "Como, Italy", price: 68, swatch: "linear-gradient(135deg,#F4E9D0,#D9C9A0)", image: "" },
+  { id: "p2", name: "Wool Bouclé", origin: "Yorkshire, UK", price: 54, swatch: "linear-gradient(135deg,#D6C7B6,#A89A88)", image: "" },
+  { id: "p3", name: "Linen Voile", origin: "Normandy, France", price: 42, swatch: "linear-gradient(135deg,#EFEAD8,#CFC8B4)", image: "" },
+  { id: "p4", name: "Velvet Cotton", origin: "Lyon, France", price: 76, swatch: "linear-gradient(135deg,#5A3A40,#2A1A1E)", image: "" },
+  { id: "p5", name: "Cashmere Twill", origin: "Kashmir, India", price: 92, swatch: "linear-gradient(135deg,#D2C3AA,#9A8A70)", image: "" },
+  { id: "p6", name: "Jacquard Brocade", origin: "Suzhou, China", price: 88, swatch: "linear-gradient(135deg,#E8CE7A,#A8841E)", image: "" },
 ];
 
-function wa(p) {
-  const msg = p
-    ? "Hi YARA, I am interested in " + p.name + " (" + p.origin + ") — can you share more details?"
-    : "Hi YARA, I would like to know more about your fabrics.";
-  return "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(msg);
+const SWATCH_PRESETS = [
+  { label: "Cream Silk", value: "linear-gradient(135deg,#F4E9D0,#D9C9A0)" },
+  { label: "Stone Wool", value: "linear-gradient(135deg,#D6C7B6,#A89A88)" },
+  { label: "Soft Linen", value: "linear-gradient(135deg,#EFEAD8,#CFC8B4)" },
+  { label: "Deep Velvet", value: "linear-gradient(135deg,#5A3A40,#2A1A1E)" },
+  { label: "Camel Cashmere", value: "linear-gradient(135deg,#D2C3AA,#9A8A70)" },
+  { label: "Gold Brocade", value: "linear-gradient(135deg,#E8CE7A,#A8841E)" },
+  { label: "Sage Green", value: "linear-gradient(135deg,#C9D4C2,#9CB39A)" },
+  { label: "Plum Mohair", value: "linear-gradient(135deg,#E3D6E8,#B6A4C4)" },
+  { label: "Charcoal Wool", value: "linear-gradient(135deg,#6E6E6E,#3A3A3A)" },
+];
+
+const MOCKUPS = [
+  { id: "dress", label: "Dress" },
+  { id: "curtain", label: "Curtain" },
+  { id: "sofa", label: "Sofa Cushion" },
+  { id: "shirt", label: "Shirt" },
+];
+
+const NAV = ["Home", "About", "Shop", "Contact"];
+
+function FabricFill({ product, className = "", style = {} }) {
+  const bg = product.image
+    ? { backgroundImage: `url(${product.image})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : { background: product.swatch };
+  return <div className={className} style={{ ...bg, ...style }} />;
 }
 
-export default function App() {
+function Mockup({ type, product }) {
+  const fillStyle = product.image
+    ? { backgroundImage: `url(${product.image})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : { background: product.swatch };
+
+  if (type === "dress") {
+    return (
+      <div className="relative w-full aspect-[3/4] flex items-center justify-center bg-[#0E2A21] rounded">
+        <svg viewBox="0 0 200 260" className="w-3/4 h-3/4">
+          <defs>
+            <clipPath id="dressClip">
+              <path d="M100 10 C 85 10 75 25 75 40 L 60 70 L 40 240 C 60 255 140 255 160 240 L 140 70 L 125 40 C 125 25 115 10 100 10 Z" />
+            </clipPath>
+          </defs>
+          <foreignObject width="200" height="260" clipPath="url(#dressClip)">
+            <div style={{ width: "200px", height: "260px", ...fillStyle }} />
+          </foreignObject>
+          <path d="M100 10 C 85 10 75 25 75 40 L 60 70 L 40 240 C 60 255 140 255 160 240 L 140 70 L 125 40 C 125 25 115 10 100 10 Z" fill="none" stroke="#D4AF37" strokeWidth="1" opacity="0.5" />
+        </svg>
+      </div>
+    );
+  }
+  if (type === "curtain") {
+    return (
+      <div className="relative w-full aspect-[3/4] bg-[#0E2A21] rounded overflow-hidden flex">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex-1 h-full relative" style={{ ...fillStyle, filter: i % 2 === 0 ? "brightness(0.85)" : "brightness(1.05)" }}>
+            <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.15), transparent 30%, transparent 70%, rgba(0,0,0,0.15))" }} />
+          </div>
+        ))}
+        <div className="absolute top-0 left-0 right-0 h-3 bg-[#D4AF37]/70" />
+      </div>
+    );
+  }
+  if (type === "sofa") {
+    return (
+      <div className="relative w-full aspect-[3/4] bg-[#0E2A21] rounded flex items-center justify-center">
+        <div className="relative w-3/4 aspect-square rounded-xl shadow-2xl" style={fillStyle}>
+          <div className="absolute inset-3 border border-white/10 rounded-lg" />
+          <div className="absolute -bottom-3 left-4 w-6 h-6 bg-[#1B2E27] rounded-sm" />
+          <div className="absolute -bottom-3 right-4 w-6 h-6 bg-[#1B2E27] rounded-sm" />
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="relative w-full aspect-[3/4] flex items-center justify-center bg-[#0E2A21] rounded">
+      <svg viewBox="0 0 200 200" className="w-3/4 h-3/4">
+        <defs>
+          <clipPath id="shirtClip">
+            <path d="M70 20 L 100 35 L 130 20 L 165 45 L 150 75 L 135 65 L 135 180 L 65 180 L 65 65 L 50 75 L 35 45 Z" />
+          </clipPath>
+        </defs>
+        <foreignObject width="200" height="200" clipPath="url(#shirtClip)">
+          <div style={{ width: "200px", height: "200px", ...fillStyle }} />
+        </foreignObject>
+        <path d="M70 20 L 100 35 L 130 20 L 165 45 L 150 75 L 135 65 L 135 180 L 65 180 L 65 65 L 50 75 L 35 45 Z" fill="none" stroke="#D4AF37" strokeWidth="1" opacity="0.5" />
+      </svg>
+    </div>
+  );
+}
+
+export default function YaraSite() {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [products, setProducts] = useState(DEFAULTS);
+  const [products, setProducts] = useState(DEFAULT_PRODUCTS);
+  const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [editId, setEditId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState(null);
-  const [modal, setModal] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [detailProduct, setDetailProduct] = useState(null);
+  const [mockupType, setMockupType] = useState("dress");
 
   useEffect(() => {
-    setIsAdmin(new URLSearchParams(window.location.search).get("admin") === "1");
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setProducts(JSON.parse(raw));
-    } catch(e) {}
+    const params = new URLSearchParams(window.location.search);
+    setIsAdmin(params.get("admin") === "1");
   }, []);
 
-  function saveProducts(next) {
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setProducts(parsed.map((p) => ({ image: "", ...p })));
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PRODUCTS));
+      }
+    } catch (e) {
+      console.error("Storage load error", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const persist = async (next) => {
     setProducts(next);
-    try { localStorage.setItem(KEY, JSON.stringify(next)); } catch(e) {}
-  }
-
-  function scroll(id) {
-    setMenuOpen(false);
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  }
-
-  function addNew() {
-    const p = { id: "p" + Date.now(), name: "New Fabric", origin: "Origin", price: 0, color: "#C9A227" };
-    const next = [...products, p];
-    setProducts(next);
-    setEditId(p.id);
-    setDraft(Object.assign({}, p));
-  }
-
-  function startEdit(p) {
-    setEditId(p.id);
-    setDraft(Object.assign({}, p));
-  }
-
-  function cancelEdit() {
-    setEditId(null);
-    setDraft(null);
-  }
-
-  function saveEdit() {
-    const next = products.map(function(p) { return p.id === editId ? draft : p; });
-    saveProducts(next);
-    setEditId(null);
-    setDraft(null);
-  }
-
-  function removeProduct(id) {
-    saveProducts(products.filter(function(p) { return p.id !== id; }));
-  }
-
-  const s = {
-    page: { fontFamily: "Georgia, serif", background: "#F4EFE2", color: "#1B2E27", minHeight: "100vh" },
-    adminBar: { background: "#C9A227", color: "#0E2A21", textAlign: "center", padding: "8px", fontSize: "12px", letterSpacing: "2px" },
-    header: { position: "sticky", top: 0, zIndex: 50, background: "linear-gradient(135deg,#0E2A21,#1B4A3A)", borderBottom: "1px solid rgba(212,175,55,0.2)", padding: "0 24px" },
-    headerInner: { maxWidth: "1200px", margin: "0 auto", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between" },
-    logo: { fontSize: "24px", letterSpacing: "6px", color: "#E8D9A8", background: "none", border: "none", cursor: "pointer" },
-    navLinks: { display: "flex", gap: "36px" },
-    navLink: { fontSize: "12px", letterSpacing: "3px", textTransform: "uppercase", color: "#D9CFC0", background: "none", border: "none", cursor: "pointer" },
-    inquireBtn: { background: "linear-gradient(135deg,#F4D88C,#C9A227)", color: "#0E2A21", padding: "8px 16px", borderRadius: "20px", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", fontWeight: "600", textDecoration: "none" },
-    hero: { background: "linear-gradient(135deg,#0E2A21,#1B4A3A 60%,#0E2A21)", padding: "80px 24px", minHeight: "70vh", display: "flex", alignItems: "center" },
-    heroInner: { maxWidth: "700px", margin: "0 auto" },
-    eyebrow: { color: "#D4AF37", fontSize: "11px", letterSpacing: "5px", textTransform: "uppercase", marginBottom: "24px" },
-    h1: { fontSize: "clamp(40px,8vw,80px)", lineHeight: 1.1, color: "#F4EFE2", margin: "0 0 24px" },
-    goldText: { background: "linear-gradient(135deg,#F4D88C,#D4AF37)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
-    heroP: { color: "#A8C0B4", fontSize: "18px", lineHeight: 1.7, marginBottom: "40px" },
-    goldBtn: { background: "linear-gradient(135deg,#F4D88C,#D4AF37)", color: "#0E2A21", padding: "16px 36px", fontSize: "12px", letterSpacing: "3px", textTransform: "uppercase", fontWeight: "700", border: "none", cursor: "pointer", display: "inline-block", textDecoration: "none" },
-    about: { padding: "100px 24px", background: "linear-gradient(180deg,#F4EFE2,#ECE5D2)", textAlign: "center" },
-    aboutInner: { maxWidth: "700px", margin: "0 auto" },
-    h2: { fontSize: "clamp(28px,4vw,48px)", lineHeight: 1.3, color: "#0E2A21", margin: "0 0 32px" },
-    divider: { width: "120px", height: "2px", background: "linear-gradient(90deg,transparent,#D4AF37,transparent)", margin: "0 auto 32px" },
-    aboutP: { color: "#5A6E64", lineHeight: 1.8 },
-    shop: { padding: "100px 24px", background: "#0E2A21" },
-    shopInner: { maxWidth: "1200px", margin: "0 auto" },
-    shopHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "48px", flexWrap: "wrap", gap: "16px" },
-    shopH2: { fontSize: "clamp(28px,4vw,40px)", color: "#F4EFE2", margin: 0 },
-    addBtn: { background: "linear-gradient(135deg,#F4D88C,#D4AF37)", color: "#0E2A21", padding: "10px 20px", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", fontWeight: "700", border: "none", cursor: "pointer", borderRadius: "4px" },
-    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: "24px" },
-    card: { background: "linear-gradient(160deg,#1B4A3A,#163C2F)", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "6px", overflow: "hidden" },
-    cardBody: { padding: "20px" },
-    cardName: { fontSize: "20px", color: "#F4EFE2", margin: "0 0 6px" },
-    cardOrigin: { fontSize: "11px", letterSpacing: "3px", textTransform: "uppercase", color: "#A8C0B4", margin: "0 0 16px" },
-    cardFoot: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-    price: { fontSize: "20px", color: "#E8D9A8" },
-    smallBtn: { border: "1px solid rgba(212,175,55,0.4)", color: "#E8D9A8", padding: "8px 14px", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", background: "none", cursor: "pointer", borderRadius: "3px" },
-    greenBtn: { background: "linear-gradient(135deg,#F4D88C,#D4AF37)", color: "#0E2A21", padding: "8px 14px", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", fontWeight: "700", border: "none", cursor: "pointer", borderRadius: "3px", textDecoration: "none", display: "inline-block" },
-    contact: { padding: "100px 24px", background: "linear-gradient(180deg,#ECE5D2,#F4EFE2)", textAlign: "center" },
-    contactInner: { maxWidth: "600px", margin: "0 auto" },
-    waBtn: { background: "linear-gradient(135deg,#25D366,#1da851)", color: "#fff", padding: "18px 40px", borderRadius: "40px", fontSize: "14px", letterSpacing: "2px", textTransform: "uppercase", fontWeight: "700", textDecoration: "none", display: "inline-block" },
-    footer: { background: "#0E2A21", borderTop: "1px solid rgba(212,175,55,0.2)", padding: "40px 24px", textAlign: "center" },
-    overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" },
-    modalBox: { background: "#0E2A21", borderRadius: "8px", maxWidth: "500px", width: "100%", maxHeight: "90vh", overflowY: "auto" },
-    modalHead: { padding: "20px", borderBottom: "1px solid rgba(212,175,55,0.15)", display: "flex", justifyContent: "space-between", alignItems: "center" },
-    modalBody: { padding: "20px" },
-    input: { width: "100%", background: "#0E2A21", border: "1px solid rgba(212,175,55,0.3)", color: "#F4EFE2", padding: "10px", fontSize: "14px", borderRadius: "4px", boxSizing: "border-box", marginTop: "6px", marginBottom: "12px" },
-    label: { fontSize: "11px", color: "#A8C0B4", textTransform: "uppercase", letterSpacing: "2px" },
+    setSaving(true);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch (e) {
+      console.error("Storage save error", e);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  return (
-    <div style={s.page}>
-      {isAdmin && <div style={s.adminBar}>ADMIN MODE — changes saved locally</div>}
+  const scrollTo = (id) => {
+    setMenuOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
 
-      <header style={s.header}>
-        <div style={s.headerInner}>
-          <button style={s.logo} onClick={() => scroll("home")}>YARA</button>
-          <nav style={s.navLinks} className="desktop-nav">
-            {["Home","About","Shop","Contact"].map(n => (
-              <button key={n} style={s.navLink} onClick={() => scroll(n.toLowerCase())}>{n}</button>
+  const whatsappLink = (product) => {
+    const msg = product
+      ? `Hi YARA, I'm interested in ${product.name} (${product.origin}) — could you tell me more about availability?`
+      : `Hi YARA, I'd like to know more about your fabric collection.`;
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+  };
+
+  const startAdd = () => {
+    const newProduct = { id: `p${Date.now()}`, name: "New Fabric", origin: "Origin", price: 0, swatch: SWATCH_PRESETS[0].value, image: "" };
+    setEditingId(newProduct.id);
+    setDraft(newProduct);
+    setProducts((prev) => [...prev, newProduct]);
+  };
+
+  const startEdit = (product) => {
+    setEditingId(product.id);
+    setDraft({ ...product });
+  };
+
+  const cancelEdit = () => {
+    if (editingId && !products.find((p) => p.id === editingId)?.name) {
+      setProducts((prev) => prev.filter((p) => p.id !== editingId));
+    }
+    setEditingId(null);
+    setDraft(null);
+  };
+
+  const saveEdit = async () => {
+    const next = products.map((p) => (p.id === editingId ? draft : p));
+    await persist(next);
+    setEditingId(null);
+    setDraft(null);
+  };
+
+  const removeProduct = async (id) => {
+    const next = products.filter((p) => p.id !== id);
+    await persist(next);
+  };
+
+  const openVisualize = (product) => {
+    setDetailProduct({ ...product, _showVisualize: true });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0E2A21] flex items-center justify-center">
+        <p className="text-[#E8D9A8] font-serif text-2xl tracking-[0.2em]">YARA</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[#F4EFE2] text-[#1B2E27]" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <style>{`
+        .serif { font-family: 'Playfair Display', serif; }
+      `}</style>
+
+      {isAdmin && (
+        <div className="bg-[#C9A227] text-[#0E2A21] text-center py-2 text-xs tracking-[0.2em] uppercase font-medium flex items-center justify-center gap-2">
+          <Lock className="w-3.5 h-3.5" /> Admin mode — changes are visible to all customers
+        </div>
+      )}
+
+      {/* ---------- NAV ---------- */}
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-[#0E2A21] to-[#1B4A3A] border-b border-[#C9A227]/20">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <button onClick={() => scrollTo("home")} className="serif text-2xl tracking-[0.25em] text-[#E8D9A8] font-semibold">
+            YARA
+          </button>
+          <nav className="hidden md:flex items-center gap-10">
+            {NAV.map((item) => (
+              <button key={item} onClick={() => scrollTo(item.toLowerCase())} className="text-sm tracking-[0.2em] text-[#D9CFC0] hover:text-[#E8D9A8] transition-colors uppercase">
+                {item}
+              </button>
             ))}
           </nav>
-          <a href={wa(null)} target="_blank" rel="noreferrer" style={s.inquireBtn}>Inquire</a>
+          <div className="flex items-center gap-4">
+            <a href={whatsappLink()} target="_blank" rel="noreferrer" className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-[#F4D88C] to-[#C9A227] text-[#0E2A21] px-4 py-2 rounded-full text-xs tracking-[0.15em] uppercase font-semibold hover:shadow-lg hover:shadow-[#C9A227]/30 transition-shadow">
+              <MessageCircle className="w-3.5 h-3.5" /> Inquire
+            </a>
+            <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
+              {menuOpen ? <X className="w-5 h-5 text-[#E8D9A8]" /> : <Menu className="w-5 h-5 text-[#E8D9A8]" />}
+            </button>
+          </div>
         </div>
+        {menuOpen && (
+          <div className="md:hidden bg-[#0E2A21] border-t border-[#C9A227]/20 px-6 py-4 flex flex-col gap-4">
+            {NAV.map((item) => (
+              <button key={item} onClick={() => scrollTo(item.toLowerCase())} className="text-sm tracking-[0.2em] text-[#D9CFC0] text-left uppercase">
+                {item}
+              </button>
+            ))}
+            <a href={whatsappLink()} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[#E8D9A8] text-sm tracking-[0.2em] uppercase">
+              <MessageCircle className="w-4 h-4" /> Inquire on WhatsApp
+            </a>
+          </div>
+        )}
       </header>
 
-      <section id="home" style={s.hero}>
-        <div style={s.heroInner}>
-          <p style={s.eyebrow}>Curated Textiles &amp; Premium Fabrics</p>
-          <h1 style={s.h1}>Fabric,<br /><span style={s.goldText}>Curated.</span></h1>
-          <p style={s.heroP}>A refined selection of silks, wools, and weaves sourced from the world's finest mills — for makers who treat fabric as the foundation of craft.</p>
-          <button style={s.goldBtn} onClick={() => scroll("shop")}>Explore the Collection →</button>
-        </div>
-      </section>
+      {/* ---------- HERO ---------- */}
+      <section id="home" className="relative min-h-[80vh] flex items-center overflow-hidden" style={{
+        background: "radial-gradient(circle at 80% 20%, rgba(212,175,55,0.18), transparent 50%), radial-gradient(circle at 10% 80%, rgba(47,110,84,0.5), transparent 55%), linear-gradient(135deg, #0E2A21 0%, #1B4A3A 60%, #0E2A21 100%)"
+      }}>
+        <svg className="absolute inset-0 w-full h-full opacity-25" preserveAspectRatio="none" viewBox="0 0 1200 800">
+          <defs>
+            <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#F4D88C" />
+              <stop offset="100%" stopColor="#9C7A1B" />
+            </linearGradient>
+          </defs>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <path key={i} d={`M${-100 + i * 130} -50 C ${100 + i * 130} 250, ${-100 + i * 130} 550, ${100 + i * 130} 850`} stroke="url(#g1)" strokeWidth="1" fill="none" />
+          ))}
+        </svg>
 
-      <section id="about" style={s.about}>
-        <div style={s.aboutInner}>
-          <p style={s.eyebrow}>Our Mission</p>
-          <h2 style={s.h2}>We connect makers with fabrics that honor craftsmanship and timeless design.</h2>
-          <div style={s.divider}></div>
-          <p style={s.aboutP}>Every textile in the YARA collection is selected for its quality, origin, and feel — not for volume or trend. We work directly with heritage mills to bring a curated edit of fabrics to designers who notice the difference.</p>
-        </div>
-      </section>
-
-      <section id="shop" style={s.shop}>
-        <div style={s.shopInner}>
-          <div style={s.shopHead}>
-            <div>
-              <p style={s.eyebrow}>The Collection</p>
-              <h2 style={s.shopH2}>Shop Fabrics</h2>
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-              <p style={{ color:"#A8C0B4", fontSize:"13px" }}>Per meter · Inquire to order</p>
-              {isAdmin && <button style={s.addBtn} onClick={addNew}>+ Add Fabric</button>}
-            </div>
+        <div className="relative max-w-6xl mx-auto px-6 w-full grid md:grid-cols-2 gap-12 items-center py-16">
+          <div>
+            <p className="text-[#D4AF37] text-xs tracking-[0.35em] uppercase mb-6 font-medium">Curated Textiles &amp; Premium Fabrics</p>
+            <h1 className="serif text-5xl md:text-7xl leading-[1.05] text-[#F4EFE2]">
+              Fabric,
+              <br />
+              <span className="bg-gradient-to-r from-[#F4D88C] to-[#D4AF37] bg-clip-text text-transparent">Curated.</span>
+            </h1>
+            <p className="mt-6 text-[#A8C0B4] text-base md:text-lg leading-relaxed max-w-md">
+              A refined selection of silks, wools, and weaves sourced from the world's finest mills — for makers who treat fabric as the foundation of craft.
+            </p>
+            <button onClick={() => scrollTo("shop")} className="mt-10 inline-flex items-center gap-3 bg-gradient-to-r from-[#F4D88C] via-[#D4AF37] to-[#9C7A1B] text-[#0E2A21] px-8 py-4 text-sm tracking-[0.2em] uppercase font-semibold shadow-lg shadow-[#D4AF37]/25 hover:shadow-xl hover:shadow-[#D4AF37]/40 hover:-translate-y-0.5 transition-all">
+              Explore the Collection <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
 
-          <div style={s.grid}>
-            {products.map(function(p) {
-              return (
-                <div key={p.id} style={s.card}>
-                  <div style={{ height:"220px", background: p.image ? "url("+p.image+") center/cover" : p.color, cursor:"pointer" }} onClick={() => setModal(p)}></div>
-                  {editId === p.id ? (
-                    <div style={s.cardBody}>
-                      <p style={s.label}>Name</p>
-                      <input style={s.input} value={draft.name} onChange={function(e){ setDraft(Object.assign({},draft,{name:e.target.value})); }} />
-                      <p style={s.label}>Origin</p>
-                      <input style={s.input} value={draft.origin} onChange={function(e){ setDraft(Object.assign({},draft,{origin:e.target.value})); }} />
-                      <p style={s.label}>Price / meter (USD)</p>
-                      <input style={s.input} type="number" value={draft.price} onChange={function(e){ setDraft(Object.assign({},draft,{price:parseFloat(e.target.value)||0})); }} />
-                      <p style={s.label}>Photo URL (optional)</p>
-                      <input style={s.input} value={draft.image||""} placeholder="https://..." onChange={function(e){ setDraft(Object.assign({},draft,{image:e.target.value})); }} />
-                      <p style={s.label}>Color (hex)</p>
-                      <input style={s.input} value={draft.color} onChange={function(e){ setDraft(Object.assign({},draft,{color:e.target.value})); }} />
-                      <div style={{ display:"flex", gap:"8px", marginTop:"8px" }}>
-                        <button style={s.greenBtn} onClick={saveEdit}>Save</button>
-                        <button style={s.smallBtn} onClick={cancelEdit}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={s.cardBody}>
-                      <h3 style={s.cardName}>{p.name}</h3>
-                      <p style={s.cardOrigin}>{p.origin}</p>
-                      <div style={s.cardFoot}>
-                        <p style={s.price}>${typeof p.price === "number" ? p.price.toFixed(2) : p.price}<span style={{ fontSize:"11px", color:"#A8C0B4" }}> /m</span></p>
-                        <div style={{ display:"flex", gap:"8px" }}>
-                          {isAdmin ? (
-                            <>
-                              <button style={s.smallBtn} onClick={function(){ startEdit(p); }}>Edit</button>
-                              <button style={{ ...s.smallBtn, borderColor:"rgba(255,100,100,0.4)", color:"#ffaaaa" }} onClick={function(){ removeProduct(p.id); }}>Delete</button>
-                            </>
-                          ) : (
-                            <>
-                              <button style={s.smallBtn} onClick={function(){ setModal(p); }}>View</button>
-                              <a href={wa(p)} target="_blank" rel="noreferrer" style={s.greenBtn}>Inquire</a>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+          <div className="relative hidden md:block">
+            <div className="relative aspect-[4/5] rounded-sm shadow-2xl overflow-hidden">
+              <FabricFill product={products[0] || { swatch: "linear-gradient(160deg,#2F6E54 0%, #1B4A3A 45%, #0E2A21 100%)" }} className="absolute inset-0" />
+              <div className="absolute top-0 right-0 w-28 h-28" style={{ background: "linear-gradient(135deg, transparent 50%, #D4AF37 50%)", clipPath: "polygon(100% 0, 0 0, 100% 100%)" }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(0deg, rgba(14,42,33,0.85), transparent 50%)" }} />
+              <div className="absolute bottom-8 left-8 text-[#E8D9A8]">
+                <p className="serif text-3xl">{products[0]?.name || "Curated Fabric"}</p>
+                <p className="text-xs tracking-[0.25em] text-[#A8C0B4] mt-2 uppercase">{products[0]?.origin}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- ABOUT ---------- */}
+      <section id="about" className="py-24 md:py-32" style={{ background: "linear-gradient(180deg,#F4EFE2,#ECE5D2)" }}>
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <p className="text-[#9C7A1B] text-xs tracking-[0.35em] uppercase mb-6 font-medium">Our Mission</p>
+          <h2 className="serif text-3xl md:text-5xl leading-tight text-[#0E2A21]">
+            We connect makers with fabrics that honor craftsmanship, durability, and timeless design.
+          </h2>
+          <div className="w-32 h-px bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mx-auto my-10" />
+          <p className="text-[#5A6E64] leading-relaxed max-w-2xl mx-auto">
+            Every textile in the YARA collection is selected for its quality, origin, and feel — not for volume or trend.
+            We work directly with heritage mills to bring a small, considered edit of fabrics to designers and creators who notice the difference.
+          </p>
+
+          <div className="flex justify-center gap-10 mt-14 flex-wrap">
+            {[
+              { icon: "✦", label: "Quality First" },
+              { icon: "◈", label: "Curated Edit" },
+              { icon: "❖", label: "Heritage Mills" },
+              { icon: "⬡", label: "Trusted Sourcing" },
+            ].map((v) => (
+              <div key={v.label} className="flex flex-col items-center gap-3">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg text-[#F4D88C]" style={{ background: "linear-gradient(135deg,#2F6E54,#0E2A21)" }}>
+                  {v.icon}
                 </div>
-              );
-            })}
+                <span className="text-xs tracking-[0.18em] uppercase text-[#0E2A21] font-medium">{v.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section id="contact" style={s.contact}>
-        <div style={s.contactInner}>
-          <p style={{ ...s.eyebrow, color:"#9C7A1B" }}>Get in Touch</p>
-          <h2 style={s.h2}>Visit the Showroom</h2>
-          <p style={{ ...s.aboutP, marginBottom:"40px" }}>For fabric availability, pricing, or trade inquiries — message us on WhatsApp and we will reply within the day.</p>
-          <a href={wa(null)} target="_blank" rel="noreferrer" style={s.waBtn}>Chat on WhatsApp</a>
+      {/* ---------- SHOP ---------- */}
+      <section id="shop" className="py-24 md:py-32 relative" style={{ background: "#0E2A21" }}>
+        <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 90% 10%, rgba(212,175,55,0.12), transparent 45%)" }} />
+        <div className="max-w-6xl mx-auto px-6 relative">
+          <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
+            <div>
+              <p className="text-[#D4AF37] text-xs tracking-[0.35em] uppercase mb-4 font-medium">The Collection</p>
+              <h2 className="serif text-3xl md:text-4xl text-[#F4EFE2]">Shop Fabrics</h2>
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-[#A8C0B4] text-sm">Priced per meter · Inquire for orders</p>
+              {isAdmin && (
+                <button onClick={startAdd} className="flex items-center gap-2 bg-gradient-to-r from-[#F4D88C] to-[#D4AF37] text-[#0E2A21] px-4 py-2 rounded text-xs tracking-[0.15em] uppercase font-semibold">
+                  <Plus className="w-4 h-4" /> Add Fabric
+                </button>
+              )}
+            </div>
+          </div>
+
+          {products.length === 0 && (
+            <p className="text-[#A8C0B4] text-sm">No fabrics yet. {isAdmin ? "Click \"Add Fabric\" to get started." : "Please check back soon."}</p>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.map((p) => (
+              <div key={p.id} className="group relative border rounded overflow-hidden transition-all hover:-translate-y-1" style={{ background: "linear-gradient(160deg,#1B4A3A,#163C2F)", borderColor: "rgba(212,175,55,0.15)" }}>
+                <div className="absolute top-0 right-0 w-10 h-10 opacity-60 group-hover:opacity-100 transition-opacity z-10" style={{ background: "linear-gradient(135deg, transparent 50%, #D4AF37 50%)", clipPath: "polygon(100% 0, 0 0, 100% 100%)" }} />
+
+                {editingId === p.id ? (
+                  <div className="p-5 space-y-3">
+                    <div>
+                      <label className="text-xs text-[#A8C0B4] uppercase tracking-wider">Photo URL (optional)</label>
+                      <div className="aspect-[3/1] rounded mb-2 mt-1 overflow-hidden">
+                        <FabricFill product={draft} className="w-full h-full" />
+                      </div>
+                      <input
+                        value={draft.image}
+                        onChange={(e) => setDraft({ ...draft, image: e.target.value })}
+                        className="w-full bg-[#0E2A21] border border-[#D4AF37]/30 text-[#F4EFE2] text-sm px-2 py-2 rounded"
+                        placeholder="https://... (leave blank to use a color swatch)"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-[#A8C0B4] uppercase tracking-wider">Fallback swatch color</label>
+                      <select
+                        value={draft.swatch}
+                        onChange={(e) => setDraft({ ...draft, swatch: e.target.value })}
+                        className="w-full bg-[#0E2A21] border border-[#D4AF37]/30 text-[#F4EFE2] text-sm px-2 py-2 rounded mt-1"
+                      >
+                        {SWATCH_PRESETS.map((s) => (
+                          <option key={s.label} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-[#A8C0B4] uppercase tracking-wider">Name</label>
+                      <input
+                        value={draft.name}
+                        onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                        className="w-full bg-[#0E2A21] border border-[#D4AF37]/30 text-[#F4EFE2] text-sm px-2 py-2 rounded mt-1"
+                        placeholder="Fabric name"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-[#A8C0B4] uppercase tracking-wider">Origin</label>
+                      <input
+                        value={draft.origin}
+                        onChange={(e) => setDraft({ ...draft, origin: e.target.value })}
+                        className="w-full bg-[#0E2A21] border border-[#D4AF37]/30 text-[#F4EFE2] text-sm px-2 py-2 rounded mt-1"
+                        placeholder="Origin / mill location"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-[#A8C0B4] uppercase tracking-wider">Price per meter (USD)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={draft.price}
+                        onChange={(e) => setDraft({ ...draft, price: parseFloat(e.target.value) || 0 })}
+                        className="w-full bg-[#0E2A21] border border-[#D4AF37]/30 text-[#F4EFE2] text-sm px-2 py-2 rounded mt-1"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button onClick={saveEdit} disabled={saving} className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#F4D88C] to-[#D4AF37] text-[#0E2A21] py-2 rounded text-xs tracking-[0.15em] uppercase font-semibold disabled:opacity-60">
+                        <Save className="w-3.5 h-3.5" /> {saving ? "Saving..." : "Save"}
+                      </button>
+                      <button onClick={cancelEdit} className="flex items-center justify-center gap-2 border border-[#A8C0B4]/40 text-[#A8C0B4] px-3 py-2 rounded text-xs tracking-[0.15em] uppercase">
+                        <XCircle className="w-3.5 h-3.5" /> Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <button onClick={() => setDetailProduct({ ...p, _showVisualize: false })} className="block w-full text-left">
+                      <FabricFill product={p} className="aspect-square w-full" />
+                    </button>
+                    <div className="p-5">
+                      <button onClick={() => setDetailProduct({ ...p, _showVisualize: false })} className="text-left">
+                        <h3 className="serif text-lg text-[#F4EFE2] hover:text-[#F4D88C] transition-colors">{p.name}</h3>
+                      </button>
+                      <p className="text-xs tracking-[0.2em] text-[#A8C0B4] uppercase mt-1">{p.origin}</p>
+                      <div className="flex items-center justify-between mt-4">
+                        <p className="text-[#E8D9A8] text-lg">
+                          ${p.price.toFixed(2)}
+                          <span className="text-xs text-[#A8C0B4]"> / meter</span>
+                        </p>
+                        {isAdmin ? (
+                          <div className="flex gap-2">
+                            <button onClick={() => startEdit(p)} className="flex items-center gap-1 text-xs tracking-[0.15em] uppercase border border-[#D4AF37]/40 text-[#E8D9A8] px-3 py-2 rounded hover:bg-[#D4AF37] hover:text-[#0E2A21] transition-colors">
+                              <Pencil className="w-3.5 h-3.5" /> Edit
+                            </button>
+                            <button onClick={() => removeProduct(p.id)} className="flex items-center gap-1 text-xs tracking-[0.15em] uppercase border border-red-400/30 text-red-300 px-3 py-2 rounded hover:bg-red-400/20 transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <button onClick={() => openVisualize(p)} className="flex items-center gap-1 text-xs tracking-[0.15em] uppercase border border-[#D4AF37]/40 text-[#E8D9A8] px-3 py-2 rounded hover:bg-[#D4AF37] hover:text-[#0E2A21] transition-colors">
+                              <Eye className="w-3.5 h-3.5" /> Visualize
+                            </button>
+                            <a href={whatsappLink(p)} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs tracking-[0.15em] uppercase bg-gradient-to-r from-[#F4D88C] to-[#D4AF37] text-[#0E2A21] px-3 py-2 rounded font-semibold hover:shadow-lg hover:shadow-[#D4AF37]/30 transition-shadow">
+                              <MessageCircle className="w-3.5 h-3.5" /> Inquire
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <footer style={s.footer}>
-        <p style={{ fontSize:"20px", letterSpacing:"6px", color:"#E8D9A8", marginBottom:"8px" }}>YARA</p>
-        <p style={{ fontSize:"11px", letterSpacing:"3px", color:"#A8C0B4", textTransform:"uppercase" }}>Curated Textiles &amp; Premium Fabrics</p>
-        <p style={{ fontSize:"12px", color:"#5A6E64", marginTop:"8px" }}>© 2026 YARA. All rights reserved.</p>
+      {/* ---------- CONTACT ---------- */}
+      <section id="contact" className="py-24 md:py-32 text-center" style={{ background: "linear-gradient(180deg,#ECE5D2,#F4EFE2)" }}>
+        <div className="max-w-2xl mx-auto px-6">
+          <p className="text-[#9C7A1B] text-xs tracking-[0.35em] uppercase mb-6 font-medium">Get in Touch</p>
+          <h2 className="serif text-3xl md:text-5xl text-[#0E2A21] mb-6">Visit the Showroom</h2>
+          <p className="text-[#5A6E64] leading-relaxed mb-10 max-w-xl mx-auto">
+            For fabric availability, pricing, or trade inquiries, message us directly on WhatsApp — we typically reply within the day.
+          </p>
+          <a href={whatsappLink()} target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 bg-gradient-to-r from-[#25D366] to-[#1da851] text-white px-8 py-4 rounded-full text-sm tracking-[0.2em] uppercase font-semibold shadow-lg shadow-green-500/25 hover:shadow-xl hover:shadow-green-500/40 hover:-translate-y-0.5 transition-all">
+            <MessageCircle className="w-5 h-5" /> Chat on WhatsApp
+          </a>
+        </div>
+      </section>
+
+      {/* ---------- FOOTER ---------- */}
+      <footer className="border-t border-[#D4AF37]/20 py-10" style={{ background: "#0E2A21" }}>
+        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="serif text-xl tracking-[0.25em] text-[#E8D9A8]">YARA</p>
+          <p className="text-xs tracking-[0.2em] text-[#A8C0B4] uppercase">Curated Textiles &amp; Premium Fabrics</p>
+          <p className="text-xs text-[#5A6E64]">© 2026 YARA. All rights reserved.</p>
+        </div>
       </footer>
 
-      {modal && (
-        <div style={s.overlay} onClick={function(){ setModal(null); }}>
-          <div style={s.modalBox} onClick={function(e){ e.stopPropagation(); }}>
-            <div style={s.modalHead}>
+      {/* ---------- DETAIL / VISUALIZE MODAL ---------- */}
+      {detailProduct && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" onClick={() => setDetailProduct(null)}>
+          <div
+            className="max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded-lg shadow-2xl"
+            style={{ background: "#0E2A21" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-5 border-b border-[#D4AF37]/15">
               <div>
-                <h3 style={{ color:"#F4EFE2", margin:0, fontSize:"22px" }}>{modal.name}</h3>
-                <p style={{ color:"#A8C0B4", fontSize:"11px", letterSpacing:"3px", textTransform:"uppercase", margin:"4px 0 0" }}>{modal.origin}</p>
+                <h3 className="serif text-2xl text-[#F4EFE2]">{detailProduct.name}</h3>
+                <p className="text-xs tracking-[0.2em] text-[#A8C0B4] uppercase mt-1">{detailProduct.origin}</p>
               </div>
-              <button style={{ background:"none", border:"none", color:"#A8C0B4", fontSize:"22px", cursor:"pointer" }} onClick={function(){ setModal(null); }}>×</button>
+              <button onClick={() => setDetailProduct(null)} className="text-[#A8C0B4] hover:text-[#F4D88C]">
+                <X className="w-6 h-6" />
+              </button>
             </div>
-            <div style={s.modalBody}>
-              <div style={{ height:"240px", background: modal.image ? "url("+modal.image+") center/cover" : modal.color, borderRadius:"4px", marginBottom:"16px" }}></div>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                <p style={{ color:"#E8D9A8", fontSize:"22px", margin:0 }}>${typeof modal.price === "number" ? modal.price.toFixed(2) : modal.price}<span style={{ fontSize:"12px", color:"#A8C0B4" }}> / meter</span></p>
-                <a href={wa(modal)} target="_blank" rel="noreferrer" style={s.greenBtn}>Inquire on WhatsApp</a>
+
+            <div className="p-5 grid md:grid-cols-2 gap-6">
+              <div>
+                <FabricFill product={detailProduct} className="w-full aspect-square rounded mb-4" />
+                <div className="flex items-center justify-between">
+                  <p className="text-[#E8D9A8] text-xl">
+                    ${detailProduct.price.toFixed(2)}
+                    <span className="text-xs text-[#A8C0B4]"> / meter</span>
+                  </p>
+                  <a href={whatsappLink(detailProduct)} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs tracking-[0.15em] uppercase bg-gradient-to-r from-[#F4D88C] to-[#D4AF37] text-[#0E2A21] px-4 py-2 rounded font-semibold">
+                    <MessageCircle className="w-3.5 h-3.5" /> Inquire
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs tracking-[0.25em] text-[#D4AF37] uppercase mb-3 font-medium">Visualize on</p>
+                <div className="flex gap-2 mb-4 flex-wrap">
+                  {MOCKUPS.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setMockupType(m.id)}
+                      className={`text-xs tracking-[0.15em] uppercase px-3 py-2 rounded border transition-colors ${
+                        mockupType === m.id
+                          ? "bg-gradient-to-r from-[#F4D88C] to-[#D4AF37] text-[#0E2A21] border-transparent font-semibold"
+                          : "border-[#D4AF37]/30 text-[#A8C0B4] hover:border-[#D4AF37]/60"
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+                <Mockup type={mockupType} product={detailProduct} />
+                <p className="text-xs text-[#A8C0B4] mt-3 leading-relaxed">
+                  Preview only — actual drape, texture, and color may vary slightly from real fabric. Inquire for a physical swatch sample.
+                </p>
               </div>
             </div>
           </div>
@@ -258,5 +548,3 @@ export default function App() {
     </div>
   );
 }
-EOF
-echo "Done"
