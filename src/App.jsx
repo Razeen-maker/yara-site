@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useState, useEffect } from "react";
 import { Menu, X, ArrowRight, MessageCircle, Plus, Pencil, Trash2, Save, XCircle, Lock, Eye } from "lucide-react";
 
 const STORAGE_KEY = "yara:products";
